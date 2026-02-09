@@ -51,9 +51,9 @@ def _primeiro_par_comunidades_diferentes(comunidade_por_no, c1=0, c2=1):
 
 def main():
     # Parâmetros simples e "boa nota": rede não pequena, comunidades visíveis e reprodutível.
-    num_vertices = 500
+    num_vertices = 5000
     num_comunidades = 3
-    p_intra = 0.02
+    p_intra = 0.01
     p_inter = 0.010   # irrelevante após MAX_PONTES
     seed = 42
 
