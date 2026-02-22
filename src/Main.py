@@ -1,5 +1,10 @@
 # -----------------------------------------------------------------------------------------
 # Main.py
+#
+# Link para Repositorio do Projeto no GitHub
+# 
+# https://github.com/luccas00/TP2_AEDs_III
+# 
 # -----------------------------------------------------------------------------------------
 from Algoritmos import dijkstra, reconstruir_caminho_prev
 from RedeSocial import gerar_rede_social
