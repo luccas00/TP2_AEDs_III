@@ -12,15 +12,7 @@
 # - Comparar menor número de saltos (peso=1) vs menor fricção (peso calculado)
 # São gerados dois grafos: um para hops e outro para custo de repasse.
 
-# Observação:
-# - Reusa a estrutura ListaAdjacencias existente em Grafo.py (sem alterar nada do projeto atual).
-# Respeita a arquitetura do projeto e não mexe nos módulos base.
-# -----------------------------------------------------------------------------------------
-
-# Importa random para criar amostragem pseudo-aleatória com seed.
 import random
-
-# Importa ListaAdjacencias do módulo Grafo (estrutura de armazenamento do grafo).
 from Grafo import ListaAdjacencias
 
 # Função interna que calcula o peso (custo) de uma aresta no grafo de fricção.
@@ -63,7 +55,6 @@ def gerar_rede_social(
     - grafo_friccao, grafo_saltos, comunidade_por_no
     """
 
-    # Cria uma instância local de Random com seed fixa para reprodutibilidade.
     rnd = random.Random(seed)
 
     # Garante pelo menos 2 comunidades para existir “inter-comunidade”.

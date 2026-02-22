@@ -6,22 +6,9 @@
 # Benchmark do experimento "Caminho Mais Eficiente Para Viralização".
 # Objetivo é medir tempo, custo e hops médios por cenário e por modelo.
 
-#
-# Importante:
-# - NÃO alterar Algoritmos.py e Grafo.py.
-# Mantém restrição do trabalho, benchmark só chama APIs existentes.
-
-# - Usamos o gerador novo gerar_rede_social_realista() para gerar cenários mais coerentes.
-# Usa o mesmo gerador de rede realista do experimento principal.
-# -----------------------------------------------------------------------------------------
-
-# Importa o módulo time para medir tempo de execução.
 import time
 
-# Importa dijkstra e reconstrução do caminho (mesmo stack do experimento).
 from Algoritmos import dijkstra, reconstruir_caminho_prev
-
-# Importa o gerador da rede social.
 from RedeSocial import gerar_rede_social
 
 # Quantidade de rodadas por cenário para tirar média.
@@ -272,8 +259,5 @@ def main():
     # Feedback final no console indicando onde o log foi salvo.
     print(f"Benchmark finalizado. Log salvo em: {LOG_FILE}")
 
-
-# Padrão Python para execução direta do script.
 if __name__ == "__main__":
-    # Dispara a execução do benchmark.
     main()

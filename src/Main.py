@@ -1,34 +1,14 @@
 # -----------------------------------------------------------------------------------------
 # Main.py
 # -----------------------------------------------------------------------------------------
-# Cabeçalho do arquivo, deixa explícito o propósito e as restrições do trabalho.
-
-# Entry-point específico para o experimento de "Caminho Mais Eficiente Para Viralização".
-# Este arquivo é o ponto de entrada (main) do experimento, executa os cenários e imprime os resultados.
-
-#
-# Importante (requisito do grupo/professor):
-# - NÃO alterar Algoritmos.py, Grafo.py e a função gerar_rede_social() existente.
-# Restrições do projeto; este arquivo só orquestra, não mexe nos módulos base.
-
-# - Aqui usamos um gerador *novo* (gerar_rede_social_realista) para obter resultados
-#   mais coerentes/realistas na comparação Baseline vs Fricção.
-# A rede é gerada com comportamento mais realista (comunidades fortes e pontes fracas).
-# -----------------------------------------------------------------------------------------
-
-# Importa a função dijkstra (cálculo de menores caminhos) e reconstruir_caminho_prev (para extrair o caminho final).
 from Algoritmos import dijkstra, reconstruir_caminho_prev
-
-# Importa o gerador da rede social sintética (definido em RedeSocial.py).
 from RedeSocial import gerar_rede_social
 
 
 # Função utilitária para imprimir o relatório comparando Baseline (saltos) vs Fricção para um par origem/destino.
 def _relatorio_par(nome, origem, destino, distancias_saltos, prev_saltos, distancias_friccao, prev_friccao):
-    # Reconstrói o caminho baseline usando o vetor "prev" gerado pelo Dijkstra no grafo de saltos.
+    
     caminho_saltos = reconstruir_caminho_prev(prev_saltos, origem, destino)
-
-    # Reconstrói o caminho por fricção usando o vetor "prev" gerado pelo Dijkstra no grafo ponderado.
     caminho_friccao = reconstruir_caminho_prev(prev_friccao, origem, destino)
 
     # Calcula a quantidade de hops (arestas) do caminho baseline; se não existe caminho, fica None.
@@ -43,34 +23,15 @@ def _relatorio_par(nome, origem, destino, distancias_saltos, prev_saltos, distan
     # Obtém o custo total por fricção (distância final no destino, calculada pelo Dijkstra no grafo de fricção).
     custo_friccao = distancias_friccao[destino]
 
-    # Imprime uma linha separadora para padronizar o output e facilitar leitura/print.
     print("=" * 92)
-
-    # Imprime o nome do caso/cenário (ex.: "CASO 1 — Mesma Comunidade").
     print(f"{nome}")
-
-    # Imprime o par origem/destino utilizado no teste.
     print(f"Origem={origem} | Destino={destino}")
-
-    # Seção baseline.
     print("-" * 92)
-
-    # Título do baseline: menor número de saltos com peso fixo 1 por aresta.
     print("Baseline (Menor Número De Saltos | peso=1)")
-
-    # Imprime custo total, hops e lista de nós do caminho baseline.
     print(f"CustoTotal={custo_saltos} | Hops={hops_saltos} | Caminho={caminho_saltos}")
-
-    # Seção fricção.
     print("-" * 92)
-
-    # Título da fricção: menor custo acumulado com peso calculado por aresta.
     print("Fricção (Menor Custo De Repasse | peso calculado)")
-
-    # Imprime custo total (formatado com 6 casas), hops e lista de nós do caminho por fricção.
     print(f"CustoTotal={custo_friccao:.6f} | Hops={hops_friccao} | Caminho={caminho_friccao}")
-
-    # Seção de análise do resultado (divergência ou não).
     print("-" * 92)
 
     # Se ambos caminhos existem e são diferentes, sinaliza divergência (resultado esperado no contexto do experimento).
@@ -205,26 +166,18 @@ def main():
     # Caso 2 (comunidades diferentes). Seleciona um par sem aresta direta para evitar hop=1.
     origem2, destino2 = _par_comunidades_diferentes_sem_aresta(grafo_saltos, comunidade_por_no, c1=0, c2=1)
 
-    # Executa Dijkstra no grafo de saltos para o Cenário 1 (baseline).
+    # Executa Dijkstra no grafo de saltos e fricção para o Cenário 1 (baseline).
     dist_s1, prev_s1 = dijkstra(grafo_saltos, origem1)
-
-    # Executa Dijkstra no grafo de fricção para o Cenário 1.
     dist_f1, prev_f1 = dijkstra(grafo_friccao, origem1)
 
-    # Imprime o relatório do Cenário 1 comparando baseline vs fricção.
     _relatorio_par("CASO 1 — Mesma Comunidade", origem1, destino1, dist_s1, prev_s1, dist_f1, prev_f1)
 
-    # Executa Dijkstra no grafo de saltos para o Cenário 2 (baseline).
+    # Executa Dijkstra no grafo de saltos e fricção para o Cenário 2
     dist_s2, prev_s2 = dijkstra(grafo_saltos, origem2)
-
-    # Executa Dijkstra no grafo de fricção para o Cenário 2.
     dist_f2, prev_f2 = dijkstra(grafo_friccao, origem2)
 
-    # Imprime o relatório do Cenário 2 comparando baseline vs fricção.
     _relatorio_par("CASO 2 — Comunidades Diferentes", origem2, destino2, dist_s2, prev_s2, dist_f2, prev_f2)
 
 
-# Bloco padrão Python: executa main() apenas se este arquivo for rodado diretamente.
 if __name__ == "__main__":
-    # Chama a função principal (orquestra tudo).
     main()
