@@ -1,5 +1,10 @@
 # -----------------------------------------------------------------------------------------
 # MainBenchmark.py
+#
+# Link para Repositorio do Projeto no GitHub
+# 
+# https://github.com/luccas00/TP2_AEDs_III
+# 
 # -----------------------------------------------------------------------------------------
 # Este arquivo roda benchmark com múltiplas rodadas e escreve o log em arquivo.
 

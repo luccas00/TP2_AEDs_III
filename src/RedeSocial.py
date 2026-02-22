@@ -1,5 +1,10 @@
 # -----------------------------------------------------------------------------------------
 # RedeSocial.py
+#
+# Link para Repositorio do Projeto no GitHub
+# 
+# https://github.com/luccas00/TP2_AEDs_III
+# 
 # -----------------------------------------------------------------------------------------
 # Este arquivo implementa o gerador da rede social sintética, com comunidades e pesos.
 
