@@ -1,40 +1,80 @@
 # -----------------------------------------------------------------------------------------
-# MainRedeSocial.py
+# MainBenchmark.py
 # -----------------------------------------------------------------------------------------
-# Entry-point específico para o experimento de "Caminho Mais Eficiente Para Viralização".
-# Não altera o Main.py existente (orientado a mapa/grid).
+# Benchmark do experimento "Caminho Mais Eficiente Para Viralização".
+#
+# Importante:
+# - NÃO alterar Algoritmos.py e Grafo.py.
+# - Usamos o gerador novo gerar_rede_social_realista() para gerar cenários mais coerentes.
 # -----------------------------------------------------------------------------------------
 
+import time
 from Algoritmos import dijkstra, reconstruir_caminho_prev
 from RedeSocial import gerar_rede_social
 
-def _relatorio_par(nome, origem, destino, distancias_saltos, prev_saltos, distancias_friccao, prev_friccao):
-    caminho_saltos = reconstruir_caminho_prev(prev_saltos, origem, destino)
-    caminho_friccao = reconstruir_caminho_prev(prev_friccao, origem, destino)
+RODADAS = 10
+LOG_FILE = "benchmark_rede_social.txt"
 
-    hops_saltos = (len(caminho_saltos) - 1) if caminho_saltos else None
-    hops_friccao = (len(caminho_friccao) - 1) if caminho_friccao else None
 
-    custo_saltos = distancias_saltos[destino]
-    custo_friccao = distancias_friccao[destino]
+def executar_dijkstra(grafo, origem, destino):
+    inicio = time.time()
+    dist, prev = dijkstra(grafo, origem)
+    fim = time.time()
 
-    print("=" * 92)
-    print(f"{nome}")
-    print(f"Origem={origem} | Destino={destino}")
+    caminho = reconstruir_caminho_prev(prev, origem, destino)
+    hops = len(caminho) - 1 if caminho else None
+    custo = dist[destino]
 
-    print("-" * 92)
-    print("Baseline (Menor Número De Saltos | peso=1)")
-    print(f"CustoTotal={custo_saltos} | Hops={hops_saltos} | Caminho={caminho_saltos}")
+    return fim - inicio, custo, hops, caminho
 
-    print("-" * 92)
-    print("Fricção (Menor Custo De Repasse | peso calculado)")
-    print(f"CustoTotal={custo_friccao:.6f} | Hops={hops_friccao} | Caminho={caminho_friccao}")
 
-    print("-" * 92)
-    if caminho_saltos and caminho_friccao and caminho_saltos != caminho_friccao:
-        print("Divergência Detectada: o caminho por fricção difere do caminho por saltos (esperado em redes reais).")
-    else:
-        print("Sem Divergência Relevante: caminhos iguais ou indisponíveis (pode acontecer dependendo do grafo/par).")
+def benchmark_caso(nome, grafo_saltos, grafo_friccao, origem, destino, log):
+
+    log.write("=" * 90 + "\n")
+    log.write(f"{nome}\n")
+    log.write(f"Origem={origem} | Destino={destino}\n")
+    log.write("=" * 90 + "\n")
+
+    # ---------------- SALTOS ----------------
+    log.write("Executando Dijkstra (Saltos | peso=1)\n")
+    log.write("Rodada | Tempo(s) | Custo | Hops | Status\n")
+
+    tempos_s, custos_s, hops_s = [], [], []
+
+    for i in range(RODADAS):
+        t, c, h, _ = executar_dijkstra(grafo_saltos, origem, destino)
+        tempos_s.append(t)
+        custos_s.append(c)
+        hops_s.append(h)
+
+        log.write(f"{i + 1:<6} | {t:.6f} | {c} | {h} | OK\n")
+
+    log.write(
+        f"MÉDIA SALTOS: Tempo={sum(tempos_s) / RODADAS:.6f} | "
+        f"Custo={sum(custos_s) / RODADAS:.2f} | "
+        f"Hops={sum(hops_s) / RODADAS:.2f}\n\n"
+    )
+
+    # ---------------- FRICÇÃO ----------------
+    log.write("Executando Dijkstra (Fricção | peso calculado)\n")
+    log.write("Rodada | Tempo(s) | Custo | Hops | Status\n")
+
+    tempos_f, custos_f, hops_f = [], [], []
+
+    for i in range(RODADAS):
+        t, c, h, _ = executar_dijkstra(grafo_friccao, origem, destino)
+        tempos_f.append(t)
+        custos_f.append(c)
+        hops_f.append(h)
+
+        log.write(f"{i + 1:<6} | {t:.6f} | {c:.6f} | {h} | OK\n")
+
+    log.write(
+        f"MÉDIA FRICÇÃO: Tempo={sum(tempos_f) / RODADAS:.6f} | "
+        f"Custo={sum(custos_f) / RODADAS:.4f} | "
+        f"Hops={sum(hops_f) / RODADAS:.2f}\n\n"
+    )
+
 
 def _primeiro_par_mesma_comunidade(comunidade_por_no, alvo_comunidade=0):
     nos = [i for i, c in enumerate(comunidade_por_no) if c == alvo_comunidade]
@@ -42,63 +82,90 @@ def _primeiro_par_mesma_comunidade(comunidade_por_no, alvo_comunidade=0):
         return (0, 1)
     return (nos[0], nos[-1])
 
-def _primeiro_par_comunidades_diferentes(comunidade_por_no, c1=0, c2=1):
+
+def _par_comunidades_diferentes_sem_aresta(grafo_saltos, comunidade_por_no, c1=0, c2=1, tentativas=10000):
     nos1 = [i for i, c in enumerate(comunidade_por_no) if c == c1]
     nos2 = [i for i, c in enumerate(comunidade_por_no) if c == c2]
     if not nos1 or not nos2:
         return (0, len(comunidade_por_no) - 1)
+
+    # tenta achar um par sem aresta direta (evita hop=1)
+    i1 = 0
+    i2 = 0
+    while tentativas > 0:
+        u = nos1[i1 % len(nos1)]
+        v = nos2[i2 % len(nos2)]
+        if not grafo_saltos.possuiAresta(u, v):
+            return (u, v)
+        i1 += 17
+        i2 += 31
+        tentativas -= 1
+
     return (nos1[0], nos2[0])
 
+
 def main():
-    # Parâmetros simples e "boa nota": rede não pequena, comunidades visíveis e reprodutível.
+
+    # ---------------- PARÂMETROS DA REDE ----------------
     num_vertices = 5000
-    num_comunidades = 3
-    p_intra = 0.01
-    p_inter = 0.010   # irrelevante após MAX_PONTES
+    num_comunidades = 5
+    p_intra = 0.02
+    p_inter = 0.0002
+    max_pontes_por_par = 10
     seed = 42
 
-    # Interação 0..10 e fricção "forte" pra provocar diferença (Caso 3 garante).
-    interacao_min = 0
-    interacao_max = 10
-    friccao_alpha = 8.0
+    interacao_intra_min = 20
+    interacao_intra_max = 100
+    interacao_inter_min = 0
+    interacao_inter_max = 5
+
+    friccao_alpha = 30.0
 
     grafo_friccao, grafo_saltos, comunidade_por_no, nos_caso3 = gerar_rede_social(
         num_vertices=num_vertices,
         num_comunidades=num_comunidades,
         p_intra=p_intra,
         p_inter=p_inter,
+        max_pontes_por_par=max_pontes_por_par,
         seed=seed,
-        interacao_min=interacao_min,
-        interacao_max=interacao_max,
-        friccao_alpha=friccao_alpha
+        interacao_intra_min=interacao_intra_min,
+        interacao_intra_max=interacao_intra_max,
+        interacao_inter_min=interacao_inter_min,
+        interacao_inter_max=interacao_inter_max,
+        friccao_alpha=friccao_alpha,
+        construir_caso3=True
     )
 
-    # -----------------------------------------------------------------
-    # Cenários
-    # -----------------------------------------------------------------
-    # Caso 1: Mesma Comunidade
+    # --------- DEFINIÇÃO DOS PARES ---------
     origem1, destino1 = _primeiro_par_mesma_comunidade(comunidade_por_no, alvo_comunidade=0)
-
-    # Caso 2: Comunidades Diferentes (comunidade 0 e 1)
-    origem2, destino2 = _primeiro_par_comunidades_diferentes(comunidade_por_no, c1=0, c2=1)
-
-    # Caso 3: Ponte Crítica (forçado pelo gerador)
+    origem2, destino2 = _par_comunidades_diferentes_sem_aresta(grafo_saltos, comunidade_por_no, c1=0, c2=1)
     origem3, destino3 = nos_caso3
 
-    # Cenário 1
-    dist_s1, prev_s1 = dijkstra(grafo_saltos, origem1)
-    dist_f1, prev_f1 = dijkstra(grafo_friccao, origem1)
-    _relatorio_par("CASO 1 — Mesma Comunidade", origem1, destino1, dist_s1, prev_s1, dist_f1, prev_f1)
+    with open(LOG_FILE, "w", encoding="utf-8") as log:
+        log.write("BENCHMARK — CAMINHO MAIS EFICIENTE PARA VIRALIZAÇÃO\n")
+        log.write(f"Rodadas por cenário: {RODADAS}\n")
+        log.write("Modelo: Grafo não-direcionado | Baseline(peso=1) vs Fricção(peso calculado)\n\n")
 
-    # Cenário 2
-    dist_s2, prev_s2 = dijkstra(grafo_saltos, origem2)
-    dist_f2, prev_f2 = dijkstra(grafo_friccao, origem2)
-    _relatorio_par("CASO 2 — Comunidades Diferentes", origem2, destino2, dist_s2, prev_s2, dist_f2, prev_f2)
+        benchmark_caso(
+            "CASO 1 — Mesma Comunidade",
+            grafo_saltos, grafo_friccao,
+            origem1, destino1, log
+        )
 
-    # Cenário 3
-    dist_s3, prev_s3 = dijkstra(grafo_saltos, origem3)
-    dist_f3, prev_f3 = dijkstra(grafo_friccao, origem3)
-    _relatorio_par("CASO 3 — Ponte Crítica (mudança de rota por fricção)", origem3, destino3, dist_s3, prev_s3, dist_f3, prev_f3)
+        benchmark_caso(
+            "CASO 2 — Comunidades Diferentes",
+            grafo_saltos, grafo_friccao,
+            origem2, destino2, log
+        )
+
+        benchmark_caso(
+            "CASO 3 — Ponte Crítica",
+            grafo_saltos, grafo_friccao,
+            origem3, destino3, log
+        )
+
+    print(f"Benchmark finalizado. Log salvo em: {LOG_FILE}")
+
 
 if __name__ == "__main__":
     main()

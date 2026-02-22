@@ -36,21 +36,30 @@ def gerar_rede_social(
     num_vertices=400,
     num_comunidades=4,
     p_intra=0.06,
-    p_inter=0.010,
+    p_inter=0.0005,
+    max_pontes_por_par=10,
     seed=42,
-    interacao_min=0,
-    interacao_max=10,
-    friccao_alpha=5.0
+    interacao_intra_min=20,
+    interacao_intra_max=100,
+    interacao_inter_min=0,
+    interacao_inter_max=5,
+    friccao_alpha=8.0,
+    construir_caso3=True
 ):
     """
-    Gera uma rede social sintética com comunidades (sem detecção de comunidade).
-    Estratégia: blocos com alta densidade interna (p_intra) e poucas pontes (p_inter).
+    Versão *realista* do gerador, SEM alterar a função gerar_rede_social() já validada.
+
+    Diferenças principais vs gerar_rede_social():
+    - Distribuições distintas de interação:
+        * Intra-comunidade: interação alta (laços fortes)
+        * Inter-comunidade: interação baixa (pontes fracas)
+    - Conectividade inter-comunidades por amostragem controlada:
+        * Em vez de MAX_PONTES fixo (=2), usa p_inter * |C1|*|C2| com limite max_pontes_por_par
+          => cria mais alternativas e reduz a chance de "caminho 1 hop" aleatório dominar.
+    - Mantém o grafo NÃO-DIRECIONADO via duplicação (u->v e v->u).
 
     Retorna:
-    - grafo_friccao: ListaAdjacencias com pesos pela fricção
-    - grafo_saltos:  ListaAdjacencias com peso=1 (baseline de hops)
-    - comunidade_por_no: lista[int] com id da comunidade de cada nó
-    - nos_caso3: tupla (origem, destino) preparada para o caso 3 (ponte crítica)
+    - grafo_friccao, grafo_saltos, comunidade_por_no, nos_caso3
     """
     rnd = random.Random(seed)
 
@@ -71,7 +80,6 @@ def gerar_rede_social(
     grafo_friccao = ListaAdjacencias(num_vertices)
     grafo_saltos = ListaAdjacencias(num_vertices)
 
-    # Para evitar aresta duplicada (v1->v2 e v2->v1), controlamos por set de pares não-direcionados
     arestas_undirected = set()
 
     def add_aresta_undirected(u, v, interacao):
@@ -88,7 +96,7 @@ def gerar_rede_social(
 
         peso = _peso_friccao(interacao, friccao_alpha)
 
-        # Rede social não-direcionada => adiciona as duas direções
+        # Não-direcionado => duplica as duas direções
         grafo_friccao.addAresta(u, v, peso)
         grafo_friccao.addAresta(v, u, peso)
 
@@ -96,7 +104,7 @@ def gerar_rede_social(
         grafo_saltos.addAresta(v, u, 1)
 
     # -----------------------------
-    # 1) Arestas intra-comunidade
+    # 1) Arestas intra-comunidade (densas)
     # -----------------------------
     for c in range(num_comunidades):
         nos = nos_por_comunidade[c]
@@ -106,55 +114,54 @@ def gerar_rede_social(
             for j in range(i + 1, n):
                 v = nos[j]
                 if rnd.random() < p_intra:
-                    interacao = rnd.randint(interacao_min, interacao_max)
+                    interacao = rnd.randint(interacao_intra_min, interacao_intra_max)
                     add_aresta_undirected(u, v, interacao)
 
     # -----------------------------
-    # 2) Arestas inter-comunidade (pontes CONTROLADAS)
+    # 2) Arestas inter-comunidade (pontes fracas e mais realistas)
     # -----------------------------
-    MAX_PONTES = 2  # número máximo de ligações entre cada par de comunidades
-
     for c1 in range(num_comunidades):
         for c2 in range(c1 + 1, num_comunidades):
-
             nos1 = nos_por_comunidade[c1]
             nos2 = nos_por_comunidade[c2]
 
-            pontes_criadas = 0
+            # alvo de pontes (amostragem), com mínimo 1 para garantir pelo menos alguma conectividade
+            alvo = int(p_inter * len(nos1) * len(nos2))
+            if alvo < 1:
+                alvo = 1
+            if alvo > max_pontes_por_par:
+                alvo = max_pontes_por_par
 
-            while pontes_criadas < MAX_PONTES:
+            for _ in range(alvo):
                 u = nos1[rnd.randrange(len(nos1))]
                 v = nos2[rnd.randrange(len(nos2))]
-
-                interacao = rnd.randint(interacao_min, interacao_max)
+                interacao = rnd.randint(interacao_inter_min, interacao_inter_max)
                 add_aresta_undirected(u, v, interacao)
 
-                pontes_criadas += 1
-
-
     # -----------------------------
-    # 3) "Ponte crítica" (Caso 3) - construída de propósito
+    # 3) Caso 3 opcional: "ponte crítica" forçada
     # -----------------------------
-    c0 = 0
-    c1 = 1
-    c2 = 2 if num_comunidades > 2 else 1
-    c3 = num_comunidades - 1
+    nos_caso3 = None
+    if construir_caso3:
+        c0 = 0
+        c3 = num_comunidades - 1
 
-    # Seleciona nós "representantes"
-    u0 = nos_por_comunidade[c0][0]
-    u1 = nos_por_comunidade[c1][0]
-    u2 = nos_por_comunidade[c2][0]
-    u3 = nos_por_comunidade[c3][0]
+        c_mid1 = 1 if num_comunidades > 2 else c3
+        c_mid2 = 2 if num_comunidades > 3 else c_mid1
 
-    # Aresta direta muito friccionada (interacao baixa)
-    add_aresta_undirected(u0, u3, interacao_min)
+        u0 = nos_por_comunidade[c0][0]
+        u3 = nos_por_comunidade[c3][0]
+        u1 = nos_por_comunidade[c_mid1][0]
+        u2 = nos_por_comunidade[c_mid2][0]
 
-    # Rota alternativa com interacao alta (baixo custo relativo)
-    inter_alta = interacao_max
-    add_aresta_undirected(u0, u1, inter_alta)
-    add_aresta_undirected(u1, u2, inter_alta)
-    add_aresta_undirected(u2, u3, inter_alta)
+        # Aresta direta "ruim": interacao inter mínima => custo alto
+        add_aresta_undirected(u0, u3, interacao_inter_min)
 
-    nos_caso3 = (u0, u3)
+        # Rota alternativa "boa": arestas com interação alta
+        add_aresta_undirected(u0, u1, interacao_intra_max)
+        add_aresta_undirected(u1, u2, interacao_intra_max)
+        add_aresta_undirected(u2, u3, interacao_intra_max)
+
+        nos_caso3 = (u0, u3)
 
     return grafo_friccao, grafo_saltos, comunidade_por_no, nos_caso3
