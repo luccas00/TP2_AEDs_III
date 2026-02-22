@@ -1,0 +1,68 @@
+BENCHMARK — CAMINHO MAIS EFICIENTE PARA VIRALIZAÇÃO
+Rodadas por cenário: 10
+Modelo: Grafo não-direcionado | Baseline(peso=1) vs Fricção(peso calculado)
+
+==========================================================================================
+CASO 1 — Mesma Comunidade
+Origem=0 | Destino=166
+==========================================================================================
+Executando Dijkstra (Saltos | peso=1)
+Rodada | Tempo(s) | Custo | Hops | Status
+1      | 0.016150 | 3 | 3 | OK
+2      | 0.016941 | 3 | 3 | OK
+3      | 0.015965 | 3 | 3 | OK
+4      | 0.015847 | 3 | 3 | OK
+5      | 0.015915 | 3 | 3 | OK
+6      | 0.015843 | 3 | 3 | OK
+7      | 0.015312 | 3 | 3 | OK
+8      | 0.014927 | 3 | 3 | OK
+9      | 0.014772 | 3 | 3 | OK
+10     | 0.014733 | 3 | 3 | OK
+MÉDIA SALTOS: Tempo=0.015641 | Custo=3.00 | Hops=3.00
+
+Executando Dijkstra (Fricção | peso calculado)
+Rodada | Tempo(s) | Custo | Hops | Status
+1      | 0.013642 | 4.671782 | 3 | OK
+2      | 0.013724 | 4.671782 | 3 | OK
+3      | 0.013438 | 4.671782 | 3 | OK
+4      | 0.013411 | 4.671782 | 3 | OK
+5      | 0.013547 | 4.671782 | 3 | OK
+6      | 0.013479 | 4.671782 | 3 | OK
+7      | 0.013927 | 4.671782 | 3 | OK
+8      | 0.013670 | 4.671782 | 3 | OK
+9      | 0.013304 | 4.671782 | 3 | OK
+10     | 0.013483 | 4.671782 | 3 | OK
+MÉDIA FRICÇÃO: Tempo=0.013562 | Custo=4.6718 | Hops=3.00
+
+==========================================================================================
+CASO 2 — Comunidades Diferentes
+Origem=0 | Destino=167
+==========================================================================================
+Executando Dijkstra (Saltos | peso=1)
+Rodada | Tempo(s) | Custo | Hops | Status
+1      | 0.015109 | 6 | 6 | OK
+2      | 0.014989 | 6 | 6 | OK
+3      | 0.014924 | 6 | 6 | OK
+4      | 0.014870 | 6 | 6 | OK
+5      | 0.014946 | 6 | 6 | OK
+6      | 0.014824 | 6 | 6 | OK
+7      | 0.014790 | 6 | 6 | OK
+8      | 0.014837 | 6 | 6 | OK
+9      | 0.015184 | 6 | 6 | OK
+10     | 0.014891 | 6 | 6 | OK
+MÉDIA SALTOS: Tempo=0.014936 | Custo=6.00 | Hops=6.00
+
+Executando Dijkstra (Fricção | peso calculado)
+Rodada | Tempo(s) | Custo | Hops | Status
+1      | 0.013459 | 14.278605 | 7 | OK
+2      | 0.014588 | 14.278605 | 7 | OK
+3      | 0.013700 | 14.278605 | 7 | OK
+4      | 0.013659 | 14.278605 | 7 | OK
+5      | 0.013626 | 14.278605 | 7 | OK
+6      | 0.016283 | 14.278605 | 7 | OK
+7      | 0.013894 | 14.278605 | 7 | OK
+8      | 0.014101 | 14.278605 | 7 | OK
+9      | 0.015172 | 14.278605 | 7 | OK
+10     | 0.014079 | 14.278605 | 7 | OK
+MÉDIA FRICÇÃO: Tempo=0.014256 | Custo=14.2786 | Hops=7.00
+
